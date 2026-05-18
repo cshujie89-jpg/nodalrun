@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NodalRun</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="mark">NR</span>
+          <div>
+            <strong>NodalRun</strong>
+            <small data-i18n="brandSubtitle">Phase 1 Console</small>
+          </div>
+        </div>
+        <nav>
+          <button class="nav-item active" data-view="dashboard" data-i18n="navDashboard">Dashboard</button>
+          <button class="nav-item" data-view="plans" data-i18n="navPlans">PM Plans</button>
+          <button class="nav-item" data-view="tasks" data-i18n="navTasks">Tasks</button>
+          <button class="nav-item" data-view="projects" data-i18n="navProjects">Projects</button>
+          <button class="nav-item" data-view="workers" data-i18n="navWorkers">Workers</button>
+          <button class="nav-item" data-view="agents" data-i18n="navAgents">Agents</button>
+          <button class="nav-item" data-view="audit" data-i18n="navAudit">Audit</button>
+        </nav>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <h1 id="page-title">Dashboard</h1>
+            <p id="page-subtitle">Runtime health, queue, and review status.</p>
+          </div>
+          <div class="topbar-actions">
+            <button class="secondary" id="language-toggle" type="button" onclick="toggleLanguage()">中文</button>
+            <button class="primary" id="refresh" data-i18n="refresh">Refresh</button>
+          </div>
+        </header>
+
+        <section id="dashboard" class="view active">
+          <div class="metric-grid">
+            <div class="metric"><span data-i18n="metricQueued">Queued</span><strong id="metric-queued">0</strong></div>
+            <div class="metric"><span data-i18n="metricRunning">Running</span><strong id="metric-running">0</strong></div>
+            <div class="metric"><span data-i18n="metricReview">Waiting Review</span><strong id="metric-review">0</strong></div>
+            <div class="metric"><span data-i18n="metricWorkers">Workers</span><strong id="metric-workers">0</strong></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title" data-i18n="recentTasks">Recent Tasks</div>
+            <div id="recent-tasks" class="list"></div>
+          </div>
+        </section>
+
+        <section id="plans" class="view">
+          <div class="grid two">
+            <form id="plan-form" class="panel form">
+              <div class="panel-title" data-i18n="createPlan">Create PM Plan</div>
+              <label><span data-i18n="project">Project</span> <select id="plan-project" required></select></label>
+              <label><span data-i18n="title">Title</span> <input id="plan-title" required data-i18n-placeholder="planTitlePlaceholder" placeholder="Build worker dashboard" /></label>
+              <label><span data-i18n="objective">Objective</span> <textarea id="plan-objective" required rows="7" data-i18n-placeholder="objectivePlaceholder" placeholder="Describe the outcome PM agents should plan and deliver."></textarea></label>
+              <button class="primary" type="submit" data-i18n="createPlan">Create PM Plan</button>
+            </form>
+            <div class="panel">
+              <div class="panel-title" data-i18n="pmPlans">PM Plans</div>
+              <div id="plan-list" class="list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="tasks" class="view">
+          <div class="grid two">
+            <form id="task-form" class="panel form">
+              <div class="panel-title" data-i18n="createTask">Create Task</div>
+              <label><span data-i18n="project">Project</span> <select id="task-project" required></select></label>
+              <label><span data-i18n="title">Title</span> <input id="task-title" required data-i18n-placeholder="taskTitlePlaceholder" placeholder="Add landing page" /></label>
+              <label><span data-i18n="description">Description</span> <textarea id="task-description" required rows="5"></textarea></label>
+              <label><span data-i18n="validationCommand">Validation command</span> <input id="task-validation" placeholder="npm run lint" /></label>
+              <label><span data-i18n="acceptanceCriteria">Acceptance criteria</span> <textarea id="task-criteria" rows="4" data-i18n-placeholder="criteriaPlaceholder" placeholder="One item per line"></textarea></label>
+              <button class="primary" type="submit" data-i18n="createTask">Create Task</button>
+            </form>
+            <div class="panel">
+              <div class="panel-title" data-i18n="taskQueue">Task Queue</div>
+              <div id="task-list" class="list"></div>
+            </div>
+          </div>
+          <div id="task-detail" class="panel hidden"></div>
+        </section>
+
+        <section id="projects" class="view">
+          <div class="grid two">
+            <form id="project-form" class="panel form">
+              <div class="panel-title" data-i18n="createProject">Create Project</div>
+              <label><span data-i18n="name">Name</span> <input id="project-name" required placeholder="demo-web" /></label>
+              <label><span data-i18n="localRepoPath">Local repo path</span> <input id="project-repo-path" placeholder="E:\path\to\repo" /></label>
+              <label><span data-i18n="gitRepoUrl">Git repo URL</span> <input id="project-repo-url" placeholder="https://github.com/org/repo.git" /></label>
+              <label><span data-i18n="defaultBranch">Default branch</span> <input id="project-branch" value="main" /></label>
+              <button class="primary" type="submit" data-i18n="createProject">Create Project</button>
+            </form>
+            <div class="panel">
+              <div class="panel-title" data-i18n="navProjects">Projects</div>
+              <div id="project-list" class="list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="workers" class="view">
+          <div class="panel worker-runner-panel">
+            <div class="panel-title" data-i18n="workerRunners">Worker Runners</div>
+            <div class="actions">
+              <button class="primary" onclick="startRunner('dry-run')" data-i18n="startDryRun">Start Dry Run</button>
+              <button class="secondary" onclick="startRunner('claude-deepseek')" data-i18n="startClaude">Start Claude DeepSeek</button>
+              <button class="secondary" onclick="startRunner('kimi-code')" data-i18n="startKimi">Start Kimi Code</button>
+              <button class="secondary" onclick="startRunner('opencode')" data-i18n="startOpenCode">Start OpenCode</button>
+            </div>
+            <div id="runner-list" class="list runner-list"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title" data-i18n="navWorkers">Workers</div>
+            <div id="worker-list" class="list"></div>
+          </div>
+        </section>
+
+        <section id="agents" class="view">
+          <div class="grid two">
+            <form id="remote-agent-form" class="panel form">
+              <div class="panel-title" data-i18n="registerAgent">Register Remote Agent</div>
+              <label><span data-i18n="name">Name</span> <input id="agent-name" required placeholder="remote-claude-01" /></label>
+              <label><span data-i18n="agentKind">Agent kind</span>
+                <select id="agent-kind">
+                  <option value="worker">worker</option>
+                  <option value="pm">pm</option>
+                  <option value="vibe">vibe</option>
+                  <option value="hybrid">hybrid</option>
+                </select>
+              </label>
+              <label><span data-i18n="role">Role</span> <input id="agent-role" value="dev_worker" /></label>
+              <label><span data-i18n="capabilities">Capabilities</span> <textarea id="agent-capabilities" rows="3" placeholder="git&#10;python&#10;nodejs"></textarea></label>
+              <label><span data-i18n="tools">Tools</span> <textarea id="agent-tools" rows="3" placeholder="git&#10;terminal&#10;browser"></textarea></label>
+              <button class="primary" type="submit" data-i18n="registerAgent">Register Remote Agent</button>
+              <div id="agent-token" class="token-box hidden"></div>
+            </form>
+            <div class="panel">
+              <div class="panel-title" data-i18n="remoteAgents">Remote Agents</div>
+              <div id="remote-agent-list" class="list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="audit" class="view">
+          <div class="panel">
+            <div class="panel-title" data-i18n="auditEvents">Audit Events</div>
+            <div id="audit-list" class="list"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
